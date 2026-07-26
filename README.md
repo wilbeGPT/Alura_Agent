@@ -30,7 +30,7 @@ Proyecto desarrollado para el desafío **Alura Agentes**.
        Pregunta ─────▶ ┌─────────────────────┐
        del usuario     │   agent.py (RAG)    │
                         │  LangChain + LLM    │
-                        │  (gemini-2.5-flash) │
+                        │  (gemini-3.6-flash) │
                         └──────────┬──────────┘
                                   │ respuesta + fuentes
                                   ▼
@@ -66,7 +66,7 @@ Proyecto desarrollado para el desafío **Alura Agentes**.
 | Orquestación del agente | LangChain |
 | Carga de documentos | PyPDF, python-docx, openpyxl, python-pptx, unstructured, pandas |
 | Base vectorial | Chroma |
-| Modelo de lenguaje / embeddings | Google Gemini (`gemini-2.5-flash`, `models/gemini-embedding-001`) |
+| Modelo de lenguaje / embeddings | Google Gemini (`gemini-3.6-flash`, `models/gemini-embedding-001`) |
 | Interfaz | Streamlit |
 | Infraestructura / deploy | Docker + OCI Compute |
 
@@ -197,8 +197,5 @@ Servicio utilizado: **OCI Compute** (instancia VM con Docker).
 ---
 
 ## 📝 Notas
-- El LLM (`gpt-4o-mini`) y los embeddings de OpenAI pueden sustituirse
-  libremente por Cohere, Gemma (vía Ollama) u otro proveedor; solo hay
-  que cambiar `src/agent.py` e `src/ingest.py`.
-- Para producción, considera mover `chroma_db/` a un volumen persistente
-  de OCI Block Storage para no perder el índice al reiniciar el contenedor.
+- El LLM (`gemini-3.6-flash`) y los embeddings de Google Gemini (`models/gemini-embedding-001`) pueden sustituirse por otros proveedores compatibles con LangChain si así se requiere.
+- Para producción, considera mover `chroma_db/` a un volumen persistente de OCI Block Storage para no perder el índice al reiniciar el contenedor.

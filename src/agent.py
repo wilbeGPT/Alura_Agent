@@ -64,7 +64,7 @@ def load_agent():
     retriever = vectordb.as_retriever(search_kwargs={"k": 4})
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-3.6-flash",
         temperature=0,
         google_api_key=api_key
     )
