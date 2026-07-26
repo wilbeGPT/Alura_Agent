@@ -1,0 +1,32 @@
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Base de datos vectorial local
+chroma_db/
+*.db
+*.sqlite3
+
+# Entornos virtuales de Python
+.venv/
+venv/
+ENV/
+env/
+
+# Caché y archivos compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Configuración de editores/IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+

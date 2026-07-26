@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Dependencias del sistema necesarias para unstructured / parsing de office
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libmagic1 \
+    poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8501
+
+# 1) Al construir la imagen (o antes, vía CI) se debe correr:
+#    python src/ingest.py   -> genera chroma_db/
+# 2) Luego se levanta la app:
+CMD ["streamlit", "run", "app/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
