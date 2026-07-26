@@ -21,17 +21,17 @@ Proyecto desarrollado para el desafío **Alura Agentes**.
                            │  ingest.py
                            │  (loaders + splitter)
                            ▼
-                ┌─────────────────────┐
-                │  Chroma Vector DB   │
-                │  (embeddings OpenAI)│
-                └──────────┬──────────┘
-                           │  retriever (top-k)
-                           ▼
-      Pregunta ─────▶ ┌─────────────────────┐
-      del usuario     │   agent.py (RAG)    │
-                       │  LangChain + LLM    │
-                       │   (gpt-4o-mini)     │
-                       └──────────┬──────────┘
+                 ┌─────────────────────┐
+                 │  Chroma Vector DB   │
+                 │ (embeddings Gemini) │
+                 └──────────┬──────────┘
+                            │  retriever (top-k)
+                            ▼
+       Pregunta ─────▶ ┌─────────────────────┐
+       del usuario     │   agent.py (RAG)    │
+                        │  LangChain + LLM    │
+                        │  (gemini-2.5-flash) │
+                        └──────────┬──────────┘
                                   │ respuesta + fuentes
                                   ▼
                        ┌─────────────────────┐
@@ -66,7 +66,7 @@ Proyecto desarrollado para el desafío **Alura Agentes**.
 | Orquestación del agente | LangChain |
 | Carga de documentos | PyPDF, python-docx, openpyxl, python-pptx, unstructured, pandas |
 | Base vectorial | Chroma |
-| Modelo de lenguaje / embeddings | OpenAI (`gpt-4o-mini`, `text-embedding-3-small`) — intercambiable por Cohere/Gemma |
+| Modelo de lenguaje / embeddings | Google Gemini (`gemini-2.5-flash`, `models/gemini-embedding-001`) |
 | Interfaz | Streamlit |
 | Infraestructura / deploy | Docker + OCI Compute |
 
@@ -109,7 +109,7 @@ pip install -r requirements.txt
 ### 3. Configurar la clave de API
 ```bash
 cp .env.example .env
-# Edita .env y coloca tu OPENAI_API_KEY
+# Edita .env y coloca tu GEMINI_API_KEY
 ```
 
 ### 4. Agregar los documentos de la empresa

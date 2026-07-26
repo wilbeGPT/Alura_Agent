@@ -18,14 +18,14 @@ from langchain_community.document_loaders import (
     Docx2txtLoader,
     UnstructuredExcelLoader,
     UnstructuredPowerPointLoader,
-    UnstructuredMarkdownLoader,
+    TextLoader,
     CSVLoader,
     BSHTMLLoader,
 )
-from langchain.docstore.document import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
-from langchain_chroma import Chroma
+from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_community.vectorstores import Chroma
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -39,7 +39,8 @@ LOADER_MAP = {
     ".xlsx": UnstructuredExcelLoader,
     ".xls": UnstructuredExcelLoader,
     ".pptx": UnstructuredPowerPointLoader,
-    ".md": UnstructuredMarkdownLoader,
+    ".md": TextLoader,
+    ".txt": TextLoader,
     ".csv": CSVLoader,
     ".html": BSHTMLLoader,
     ".htm": BSHTMLLoader,
@@ -66,7 +67,7 @@ def load_all_documents() -> list[Document]:
 
     files = [f for f in DOCS_DIR.rglob("*") if f.is_file()]
     if not files:
-        print(f"⚠️  No hay archivos en {DOCS_DIR}. Agrega documentos antes de indexar.")
+        print(f"[!] No hay archivos en {DOCS_DIR}. Agrega documentos antes de indexar.")
 
     for file_path in files:
         suffix = file_path.suffix.lower()
@@ -81,13 +82,15 @@ def load_all_documents() -> list[Document]:
                     d.metadata["source"] = file_path.name
                 documents.extend(docs)
             else:
-                print(f"⏭️  Formato no soportado, se omite: {file_path.name}")
+                print(f"[Omitido] Formato no soportado: {file_path.name}")
         except Exception as e:
-            print(f"❌ Error cargando {file_path.name}: {e}")
+            print(f"[Error] Carga fallida {file_path.name}: {e}")
 
-    print(f"✅ Documentos cargados: {len(documents)} fragmentos de origen")
+    print(f"[OK] Documentos cargados: {len(documents)} fragmentos de origen")
     return documents
 
+
+import time
 
 def build_vectorstore():
     documents = load_all_documents()
@@ -102,17 +105,46 @@ def build_vectorstore():
         separators=["\n\n", "\n", ". ", " ", ""],
     )
     chunks = splitter.split_documents(documents)
-    print(f"✂️  Documentos divididos en {len(chunks)} chunks")
+    print(f"[OK] Documentos divididos en {len(chunks)} chunks")
 
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-
-    vectordb = Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        persist_directory=str(PERSIST_DIR),
-        collection_name="alura_agente_docs",
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/gemini-embedding-001",
+        google_api_key=api_key
     )
-    print(f"💾 Base vectorial creada/actualizada en {PERSIST_DIR}")
+
+    batch_size = 30
+    total_batches = (len(chunks) - 1) // batch_size + 1
+    vectordb = None
+
+    for idx, i in enumerate(range(0, len(chunks), batch_size), start=1):
+        batch = chunks[i : i + batch_size]
+        print(f"[...] Indexando lote {idx}/{total_batches} ({len(batch)} fragmentos)...")
+        
+        for attempt in range(1, 6):
+            try:
+                if vectordb is None:
+                    vectordb = Chroma.from_documents(
+                        documents=batch,
+                        embedding=embeddings,
+                        persist_directory=str(PERSIST_DIR),
+                        collection_name="alura_agente_docs",
+                    )
+                else:
+                    vectordb.add_documents(batch)
+                break
+            except Exception as e:
+                err_msg = str(e)
+                if "RESOURCE_EXHAUSTED" in err_msg or "429" in err_msg:
+                    print(f"    [Pausa de cuota] Esperando 15s antes de reintentar (intento {attempt}/5)...")
+                    time.sleep(15)
+                else:
+                    raise e
+
+        if idx < total_batches:
+            time.sleep(5)
+
+    print(f"[OK] Base vectorial creada/actualizada en {PERSIST_DIR}")
     return vectordb
 
 

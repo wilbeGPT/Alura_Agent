@@ -5,17 +5,22 @@ natural, recupera los fragmentos más relevantes de la base vectorial
 (Chroma) y genera una respuesta fundamentada en los documentos internos,
 citando la fuente (nombre del archivo).
 
+Construido con los bloques básicos de LangChain (Runnables de
+langchain_core) en vez de las cadenas de alto nivel (create_retrieval_chain,
+etc.), que a partir de LangChain 1.0 se movieron al paquete separado
+`langchain_classic` y cambian con frecuencia entre versiones.
+
 Uso directo (modo consola):
     python src/agent.py
 """
 
+import os
 from pathlib import Path
 
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_chroma import Chroma
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableLambda, RunnableParallel, RunnablePassthrough
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -38,8 +43,19 @@ Contexto:
 """
 
 
+def format_docs(docs) -> str:
+    return "\n\n".join(
+        f"[Fuente: {d.metadata.get('source', 'desconocido')}]\n{d.page_content}"
+        for d in docs
+    )
+
+
 def load_agent():
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/gemini-embedding-001",
+        google_api_key=api_key
+    )
     vectordb = Chroma(
         persist_directory=str(PERSIST_DIR),
         embedding_function=embeddings,
@@ -47,7 +63,11 @@ def load_agent():
     )
     retriever = vectordb.as_retriever(search_kwargs={"k": 4})
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        temperature=0,
+        google_api_key=api_key
+    )
 
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -56,15 +76,25 @@ def load_agent():
         ]
     )
 
-    combine_docs_chain = create_stuff_documents_chain(llm, prompt)
-    rag_chain = create_retrieval_chain(retriever, combine_docs_chain)
+    def generate_answer(inputs: dict) -> dict:
+        docs = inputs["context"]
+        messages = prompt.invoke({"context": format_docs(docs), "input": inputs["input"]})
+        response = llm.invoke(messages)
+        return {"answer": response.content, "context": docs}
+
+    # 1) En paralelo: recupera documentos relevantes y conserva la pregunta original
+    # 2) Genera la respuesta con el LLM usando ese contexto
+    rag_chain = (
+        RunnableParallel(context=retriever, input=RunnablePassthrough())
+        | RunnableLambda(generate_answer)
+    )
     return rag_chain
 
 
 def ask(question: str, rag_chain=None) -> dict:
     if rag_chain is None:
         rag_chain = load_agent()
-    result = rag_chain.invoke({"input": question})
+    result = rag_chain.invoke(question)
     sources = sorted(
         {doc.metadata.get("source", "desconocido") for doc in result.get("context", [])}
     )
