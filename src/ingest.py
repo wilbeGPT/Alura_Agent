@@ -113,6 +113,17 @@ def build_vectorstore():
         google_api_key=api_key
     )
 
+    try:
+        old_db = Chroma(
+            persist_directory=str(PERSIST_DIR),
+            embedding_function=embeddings,
+            collection_name="alura_agente_docs",
+        )
+        old_db.delete_collection()
+        print("[OK] Colección anterior eliminada de ChromaDB.")
+    except Exception:
+        pass
+
     batch_size = 30
     total_batches = (len(chunks) - 1) // batch_size + 1
     vectordb = None
