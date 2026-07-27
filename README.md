@@ -142,14 +142,15 @@ python src/ingest.py
 
 ---
 
-## 💬 Ejemplos de preguntas y respuestas
+## ❓ Preguntas Frecuentes (FAQ)
 
-| Pregunta | Respuesta esperada |
+| Pregunta Frecuente | Respuesta esperada / Fuente |
 |---|---|
-| "¿Cuántos días tengo para devolver un producto?" | "30 días calendario desde la entrega, con el empaque original y sin uso. (Fuente: Política de Reembolsos y Devoluciones de BimBam Buy)" |
-| "¿Quién paga el envío de una devolución por producto defectuoso?" | "BimBam Buy cubre el costo cuando la devolución se debe a un error de la empresa." |
-| "¿Puedo devolver ropa interior?" | "No, los artículos de ropa interior y productos personalizados están excluidos de la política de devoluciones." |
-| "¿Cuál es la política de vacaciones de la empresa?" | "No encontré esa información en los documentos disponibles." (el agente reconoce cuando algo no está en el contexto) |
+| "¿Cuáles son los plazos para devolver un producto?" | Muestra los plazos según retracto (10 días), daño visible (48 horas) o falla de garantía. (Fuente: Política de Reembolsos y Devoluciones) |
+| "¿Qué métodos de pago son aceptados?" | Lista las opciones de pago (Tarjetas, transferencias, efectivo, billeteras digitales). (Fuente: Preguntas Frecuentes sobre Métodos de Pago) |
+| "¿Quién paga el envío de una devolución por producto defectuoso?" | BimBam Buy cubre el costo cuando la devolución se debe a un error o defecto de origen. |
+| "¿Puedo devolver ropa interior o productos personalizados?" | No, están excluidos de las políticas de devolución por higiene/personalización. |
+| "¿Cuál es la política de vacaciones de la empresa?" | *"No encontré información sobre la política de vacaciones en los documentos disponibles."* (Control RAG de información fuera de ámbito). |
 
 ---
 
