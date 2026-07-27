@@ -114,7 +114,27 @@ def load_agent():
 def ask(question: str, rag_chain=None) -> dict:
     if rag_chain is None:
         rag_chain = load_agent()
-    result = rag_chain.invoke(question)
+    try:
+        result = rag_chain.invoke(question)
+    except Exception as e:
+        error_text = str(e)
+        if "RESOURCE_EXHAUSTED" in error_text or "429" in error_text:
+            return {
+                "answer": (
+                    "⚠️ Se alcanzó el límite gratuito diario de consultas a Gemini. "
+                    "Este límite se reinicia automáticamente cada 24 horas "
+                    "(medianoche hora del Pacífico). Por favor intenta de nuevo "
+                    "más tarde."
+                ),
+                "sources": [],
+            }
+        return {
+            "answer": (
+                "⚠️ Ocurrió un error inesperado al consultar el agente. "
+                "Por favor intenta de nuevo en unos momentos."
+            ),
+            "sources": [],
+        }
     sources = sorted(
         {doc.metadata.get("source", "desconocido") for doc in result.get("context", [])}
     )
