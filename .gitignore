@@ -3,10 +3,7 @@
 .env.*
 !.env.example
 
-# Base de datos vectorial local
-chroma_db/
-*.db
-*.sqlite3
+# Base de datos vectorial local (excepción: se incluye en este repositorio)
 
 # Entornos virtuales de Python
 .venv/
