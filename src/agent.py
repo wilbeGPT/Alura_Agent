@@ -49,6 +49,26 @@ def format_docs(docs) -> str:
         for d in docs
     )
 
+def extract_text(content) -> str:
+    """Extrae solo el texto de la respuesta del LLM.
+
+    Modelos recientes de Gemini devuelven `response.content` como una
+    lista de bloques estructurados (texto, firmas internas, etc.) en
+    vez de un string plano. Esta función toma únicamente los bloques
+    de tipo 'text' y descarta el resto.
+    """
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, dict):
+                if block.get("type") == "text":
+                    parts.append(block.get("text", ""))
+            elif isinstance(block, str):
+                parts.append(block)
+        return "".join(parts)
+    return str(content)
 
 def load_agent():
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
@@ -80,7 +100,7 @@ def load_agent():
         docs = inputs["context"]
         messages = prompt.invoke({"context": format_docs(docs), "input": inputs["input"]})
         response = llm.invoke(messages)
-        return {"answer": response.content, "context": docs}
+        return {"answer": extract_text(response.content), "context": docs}
 
     # 1) En paralelo: recupera documentos relevantes y conserva la pregunta original
     # 2) Genera la respuesta con el LLM usando ese contexto
